@@ -8,32 +8,88 @@ import {
   Pill, 
   AlertTriangle, 
   FileText, 
-  UserCheck, 
-  Calendar, 
-  Bell, 
   Activity, 
   ShieldCheck, 
   MapPin, 
   PhoneCall, 
-  Search,
-  CheckCircle2,
-  Stethoscope,
-  Ambulance,
+  Search, 
+  Bell, 
+  Send, 
+  Ambulance, 
+  CheckCircle2, 
+  Clock, 
+  AlertCircle, 
+  Sparkles,
   User,
-  Settings
+  ShieldAlert,
+  ArrowRight
 } from 'lucide-react';
 
 export default function VitaLinkDashboard() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'telemedicine' | 'ai-assistant' | 'medicine' | 'sos' | 'pmr'>('dashboard');
   const [userRole, setUserRole] = useState<'Patient' | 'Healthcare Worker' | 'Doctor' | 'Paramedic' | 'Admin'>('Patient');
-  const [sosTriggered, setSosTriggered] = useState(false);
+  
+  // Emergency SOS State
+  const [sosActive, setSosActive] = useState(false);
+  const [sosStep, setSosStep] = useState<number>(1);
+
+  // AI Assistant Chat State
+  const [messages, setMessages] = useState<Array<{ sender: 'ai' | 'user'; text: string; triage?: 'low' | 'moderate' | 'emergency' }>>([
+    {
+      sender: 'ai',
+      text: 'Hello! I am your VitaLink AI Symptom Assistant. Describe what you are feeling (e.g., "sharp chest pain", "mild fever and headache").'
+    }
+  ]);
+  const [inputText, setInputText] = useState('');
+
+  const handleSendMessage = () => {
+    if (!inputText.trim()) return;
+
+    const userMsg = inputText.trim();
+    const newMessages = [...messages, { sender: 'user' as const, text: userMsg }];
+    setMessages(newMessages);
+    setInputText('');
+
+    // Simulated Smart Healthcare Triage Logic
+    setTimeout(() => {
+      const lower = userMsg.toLowerCase();
+      if (lower.includes('chest pain') || lower.includes('breath') || lower.includes('unconscious')) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: 'ai',
+            text: 'CRITICAL ALERT: Your symptoms indicate high risk of an acute cardiopulmonary event. Please trigger Emergency SOS immediately or call emergency services.',
+            triage: 'emergency'
+          }
+        ]);
+      } else if (lower.includes('fever') || lower.includes('cough') || lower.includes('headache')) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: 'ai',
+            text: 'ASSESSMENT: Mild-to-moderate viral or tension symptoms detected. Recommended First-Aid: Stay hydrated, rest, and monitor body temperature. If fever persists past 48 hours, book a Telemedicine consultation.',
+            triage: 'moderate'
+          }
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: 'ai',
+            text: 'General inquiry noted. Please monitor symptoms closely. If condition changes, you can request an escalation to an available doctor.',
+            triage: 'low'
+          }
+        ]);
+      }
+    }, 700);
+  };
 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
       {/* Sidebar Navigation */}
       <aside className="w-64 bg-slate-900 text-white flex flex-col justify-between hidden md:flex shadow-xl">
         <div className="p-5">
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-3 mb-8 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
             <div className="p-2 bg-blue-600 rounded-xl text-white shadow-md shadow-blue-500/20">
               <Heart className="w-6 h-6 animate-pulse" />
             </div>
@@ -123,9 +179,8 @@ export default function VitaLinkDashboard() {
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-y-auto">
-        {/* Header */}
         <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold text-slate-800 capitalize">
@@ -147,8 +202,7 @@ export default function VitaLinkDashboard() {
             </div>
             <button className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full relative">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+              {sosActive && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>}
             </button>
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-teal-400 text-white flex items-center justify-center font-bold text-xs shadow">
               {userRole[0]}
@@ -156,12 +210,10 @@ export default function VitaLinkDashboard() {
           </div>
         </header>
 
-        {/* Content Body */}
         <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
-          {/* Dashboard View */}
+          {/* DASHBOARD TAB */}
           {activeTab === 'dashboard' && (
             <>
-              {/* Emergency Banner */}
               <div className="bg-gradient-to-r from-red-600 via-rose-600 to-orange-600 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 font-bold text-red-100 text-xs tracking-wider uppercase mb-1">
@@ -174,16 +226,15 @@ export default function VitaLinkDashboard() {
                 </div>
                 <button 
                   onClick={() => {
-                    setSosTriggered(!sosTriggered);
+                    setSosActive(true);
                     setActiveTab('sos');
                   }}
                   className="px-6 py-3 bg-white text-red-600 rounded-xl font-black shadow-md hover:bg-red-50 active:scale-95 transition-all text-sm uppercase tracking-wider"
                 >
-                  {sosTriggered ? 'SOS Active (View Status)' : 'Trigger SOS Now'}
+                  {sosActive ? 'SOS Active (View Live Tracker)' : 'Trigger SOS Now'}
                 </button>
               </div>
 
-              {/* Quick Health Summary Grid */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
                   <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
@@ -226,7 +277,6 @@ export default function VitaLinkDashboard() {
                 </div>
               </div>
 
-              {/* Module Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div onClick={() => setActiveTab('telemedicine')} className="bg-white p-6 rounded-2xl border border-slate-200 hover:border-blue-500 hover:shadow-md transition-all cursor-pointer group">
                   <div className="p-3 bg-blue-50 text-blue-600 rounded-xl w-fit mb-4 group-hover:bg-blue-600 group-hover:text-white transition-all">
@@ -271,12 +321,187 @@ export default function VitaLinkDashboard() {
             </>
           )}
 
-          {/* Module Placeholder Views */}
-          {activeTab !== 'dashboard' && (
+          {/* 4. EMERGENCY SOS MODULE */}
+          {activeTab === 'sos' && (
+            <div className="space-y-6">
+              {!sosActive ? (
+                <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm text-center max-w-xl mx-auto py-12">
+                  <div className="w-24 h-24 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <AlertTriangle className="w-12 h-12 animate-bounce" />
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-800">One-Tap Emergency SOS</h3>
+                  <p className="text-sm text-slate-500 mt-2 mb-8">
+                    Triggering this will automatically broadcast your live GPS coordinates, attach your encrypted medical snapshot (allergies, conditions), and alert the nearest paramedic dispatch team.
+                  </p>
+                  <button 
+                    onClick={() => {
+                      setSosActive(true);
+                      setSosStep(1);
+                    }}
+                    className="w-full py-4 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-black text-lg rounded-2xl shadow-xl shadow-red-600/30 active:scale-95 transition-all uppercase tracking-wider"
+                  >
+                    ACTIVATE SOS NOW
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-white rounded-3xl border border-red-200 shadow-xl overflow-hidden">
+                  <div className="bg-red-600 p-6 text-white flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-red-700 rounded-lg animate-pulse">
+                        <AlertTriangle className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="font-black text-xl tracking-wide">EMERGENCY SOS ACTIVE</h3>
+                        <p className="text-xs text-red-200">Incident #SOS-9042 • Live Dispatch</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setSosActive(false)}
+                      className="text-xs bg-red-800/80 hover:bg-red-800 px-3 py-1.5 rounded-lg border border-red-400/40 text-red-100"
+                    >
+                      Cancel Alert
+                    </button>
+                  </div>
+
+                  {/* Flow Steps Pipeline */}
+                  <div className="p-6 grid grid-cols-1 md:grid-cols-4 gap-4 border-b border-slate-100 bg-slate-50/50">
+                    <div className={`p-4 rounded-xl border ${sosStep >= 1 ? 'border-emerald-300 bg-emerald-50/50' : 'border-slate-200'}`}>
+                      <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs mb-1">
+                        <MapPin className="w-4 h-4" /> 1. Exact GPS
+                      </div>
+                      <p className="text-xs text-slate-600 font-medium">Lat: 23.2324° N, Long: 87.0715° E</p>
+                    </div>
+
+                    <div className={`p-4 rounded-xl border ${sosStep >= 2 ? 'border-emerald-300 bg-emerald-50/50' : 'border-slate-200'}`}>
+                      <div className="flex items-center gap-2 text-blue-600 font-bold text-xs mb-1">
+                        <FileText className="w-4 h-4" /> 2. Medical History
+                      </div>
+                      <p className="text-xs text-slate-600 font-medium">Allergies: Penicillin | Blood: O+</p>
+                    </div>
+
+                    <div className={`p-4 rounded-xl border ${sosStep >= 3 ? 'border-emerald-300 bg-emerald-50/50' : 'border-slate-200'}`}>
+                      <div className="flex items-center gap-2 text-amber-600 font-bold text-xs mb-1">
+                        <ShieldAlert className="w-4 h-4" /> 3. Triage Severity
+                      </div>
+                      <p className="text-xs text-slate-600 font-medium">Level 1 - High Criticality</p>
+                    </div>
+
+                    <div className={`p-4 rounded-xl border ${sosStep >= 4 ? 'border-red-300 bg-red-50/50' : 'border-slate-200'}`}>
+                      <div className="flex items-center gap-2 text-red-600 font-bold text-xs mb-1">
+                        <Ambulance className="w-4 h-4" /> 4. Paramedic Status
+                      </div>
+                      <p className="text-xs text-red-700 font-bold">Ambulance Dispatched (ETA: 6 mins)</p>
+                    </div>
+                  </div>
+
+                  <div className="p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="text-xs text-slate-500">
+                      Emergency response pipeline synced automatically with regional healthcare database.
+                    </div>
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={() => setSosStep((prev) => Math.min(prev + 1, 4))}
+                        className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl"
+                      >
+                        Advance Pipeline Step ({sosStep}/4)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 2. AI SYMPTOM ASSISTANT MODULE */}
+          {activeTab === 'ai-assistant' && (
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[650px]">
+              <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-xl">
+                    <Bot className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm">AI Symptom Assistant & Triage</h3>
+                    <p className="text-[11px] text-slate-400">Offline-ready neural health triage model</p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 text-[11px] font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" /> Live Assistant
+                </span>
+              </div>
+
+              {/* Chat Message Stream */}
+              <div className="flex-1 p-6 overflow-y-auto space-y-4">
+                {messages.map((msg, index) => (
+                  <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-lg rounded-2xl p-4 text-sm ${
+                      msg.sender === 'user' 
+                        ? 'bg-blue-600 text-white rounded-br-none' 
+                        : msg.triage === 'emergency'
+                        ? 'bg-red-50 border border-red-300 text-red-900 rounded-bl-none'
+                        : msg.triage === 'moderate'
+                        ? 'bg-amber-50 border border-amber-300 text-amber-900 rounded-bl-none'
+                        : 'bg-slate-100 text-slate-800 rounded-bl-none'
+                    }`}>
+                      {msg.triage && (
+                        <span className={`inline-block text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full mb-2 ${
+                          msg.triage === 'emergency' ? 'bg-red-600 text-white' : 'bg-amber-600 text-white'
+                        }`}>
+                          {msg.triage === 'emergency' ? 'High Risk - Escalation Required' : 'Moderate Priority'}
+                        </span>
+                      )}
+                      <p className="leading-relaxed">{msg.text}</p>
+
+                      {msg.triage === 'emergency' && (
+                        <div className="mt-3 pt-3 border-t border-red-200 flex gap-2">
+                          <button 
+                            onClick={() => {
+                              setSosActive(true);
+                              setActiveTab('sos');
+                            }}
+                            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-lg flex items-center gap-1"
+                          >
+                            <AlertTriangle className="w-3.5 h-3.5" /> Trigger SOS
+                          </button>
+                          <button 
+                            onClick={() => setActiveTab('telemedicine')}
+                            className="px-3 py-1.5 bg-white border border-red-300 text-red-800 font-semibold text-xs rounded-lg"
+                          >
+                            Escalate to Doctor
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Chat Input */}
+              <div className="p-4 border-t border-slate-200 bg-slate-50 flex gap-3">
+                <input
+                  type="text"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                  placeholder="Describe symptoms (e.g., severe migraine, high fever, chest pressure)..."
+                  className="flex-1 bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  onClick={handleSendMessage}
+                  className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm flex items-center gap-2 shadow-sm transition-all"
+                >
+                  <Send className="w-4 h-4" /> Send
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Module Placeholder Views for Modules 1, 3, 5 */}
+          {(activeTab === 'telemedicine' || activeTab === 'medicine' || activeTab === 'pmr') && (
             <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm text-center py-16">
               <h3 className="text-2xl font-bold text-slate-800 mb-2 capitalize">{activeTab.replace('-', ' ')} Module</h3>
               <p className="text-slate-500 max-w-md mx-auto mb-6 text-sm">
-                This section is ready for detailed component implementation in the next step.
+                Next phase will complete Telemedicine scheduling, Medicine Tracker stock queries, and encrypted Health History tables.
               </p>
               <button 
                 onClick={() => setActiveTab('dashboard')} 
