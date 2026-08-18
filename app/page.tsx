@@ -22,7 +22,11 @@ import {
   Sparkles,
   User,
   ShieldAlert,
-  ArrowRight
+  Calendar,
+  MessageSquare,
+  Navigation,
+  Check,
+  Plus
 } from 'lucide-react';
 
 export default function VitaLinkDashboard() {
@@ -42,6 +46,25 @@ export default function VitaLinkDashboard() {
   ]);
   const [inputText, setInputText] = useState('');
 
+  // Telemedicine Consultation State
+  const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
+  const [inCall, setInCall] = useState(false);
+
+  // Medicine Tracker State
+  const [medicines, setMedicines] = useState([
+    { id: 1, name: 'Paracetamol 500mg', time: '08:00 AM & 08:00 PM', purpose: 'Fever / Pain Relief', stock: 12, taken: true },
+    { id: 2, name: 'Amoxicillin 250mg', time: '02:00 PM', purpose: 'Antibiotic Course', stock: 4, taken: false },
+    { id: 3, name: 'Metformin 500mg', time: '09:00 PM', purpose: 'Blood Sugar Regulation', stock: 24, taken: false },
+  ]);
+
+  const [pharmacySearch, setPharmacySearch] = useState('');
+
+  const pharmacies = [
+    { name: 'City Central Pharmacy', distance: '0.8 km away', stock: 'In Stock', price: '$4.50', address: '12 Main Rd, Central Market' },
+    { name: 'Rural Health Dispensary', distance: '2.3 km away', stock: 'Limited Stock (3 left)', price: '$3.80', address: 'Sector 4, Community Block' },
+    { name: 'CarePlus 24/7 Meds', distance: '4.1 km away', stock: 'In Stock', price: '$4.90', address: 'Near District Hospital Gate' },
+  ];
+
   const handleSendMessage = () => {
     if (!inputText.trim()) return;
 
@@ -50,7 +73,6 @@ export default function VitaLinkDashboard() {
     setMessages(newMessages);
     setInputText('');
 
-    // Simulated Smart Healthcare Triage Logic
     setTimeout(() => {
       const lower = userMsg.toLowerCase();
       if (lower.includes('chest pain') || lower.includes('breath') || lower.includes('unconscious')) {
@@ -82,6 +104,10 @@ export default function VitaLinkDashboard() {
         ]);
       }
     }, 700);
+  };
+
+  const toggleMedicineTaken = (id: number) => {
+    setMedicines(medicines.map(m => m.id === id ? { ...m, taken: !m.taken } : m));
   };
 
   return (
@@ -179,7 +205,7 @@ export default function VitaLinkDashboard() {
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-y-auto">
         <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-3">
@@ -211,7 +237,171 @@ export default function VitaLinkDashboard() {
         </header>
 
         <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
-          {/* DASHBOARD TAB */}
+          {/* 1. TELEMEDICINE MODULE */}
+          {activeTab === 'telemedicine' && (
+            <div className="space-y-6">
+              {inCall ? (
+                <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-2xl relative">
+                  <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                      <div>
+                        <h4 className="font-bold text-base">Live Video Consultation: {selectedDoctor}</h4>
+                        <p className="text-xs text-slate-400">Encrypted low-latency telemedicine stream</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setInCall(false)}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl"
+                    >
+                      End Call
+                    </button>
+                  </div>
+                  <div className="bg-slate-800 rounded-2xl h-80 flex flex-col items-center justify-center border border-slate-700">
+                    <Video className="w-16 h-16 text-slate-500 animate-pulse mb-3" />
+                    <p className="text-slate-400 text-sm">Consultation in progress with {selectedDoctor}</p>
+                    <p className="text-slate-500 text-xs mt-1">Audio/Video bitrate automatically adapted for rural low-bandwidth</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Doctor Cards */}
+                  {[
+                    { name: 'Dr. Sarah Jenkins', spec: 'General Physician / Internal Medicine', rating: '4.9 (124 reviews)', available: 'Available Now', wait: '2 mins' },
+                    { name: 'Dr. Rajesh Mukherjee', spec: 'Cardiologist & Triage Specialist', rating: '4.8 (89 reviews)', available: 'Available Now', wait: '5 mins' },
+                    { name: 'Dr. Emily Chen', spec: 'Pediatric Care Specialist', rating: '5.0 (210 reviews)', available: 'Next Slot: 3:30 PM', wait: 'Scheduled' },
+                  ].map((doc, idx) => (
+                    <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-black text-lg">
+                            {doc.name.split(' ')[1][0]}
+                          </div>
+                          <span className="px-2.5 py-1 text-[11px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            {doc.available}
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-slate-800 text-base">{doc.name}</h4>
+                        <p className="text-xs text-slate-500 mt-0.5">{doc.spec}</p>
+                        <p className="text-xs text-amber-600 font-semibold mt-2">★ {doc.rating}</p>
+                      </div>
+
+                      <div className="mt-6 pt-4 border-t border-slate-100 flex gap-2">
+                        <button 
+                          onClick={() => {
+                            setSelectedDoctor(doc.name);
+                            setInCall(true);
+                          }}
+                          className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                        >
+                          <Video className="w-3.5 h-3.5" /> Start Call
+                        </button>
+                        <button className="p-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl">
+                          <MessageSquare className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 3. MEDICINE TRACKER MODULE */}
+          {activeTab === 'medicine' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Active Dosages */}
+                <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-800">Prescribed Dosages & Schedule</h3>
+                      <p className="text-xs text-slate-500">Automated adherence tracking and reminder sync</p>
+                    </div>
+                    <button className="px-3 py-1.5 bg-blue-50 text-blue-600 border border-blue-200 rounded-xl text-xs font-bold flex items-center gap-1">
+                      <Plus className="w-3.5 h-3.5" /> Add Reminder
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {medicines.map((med) => (
+                      <div 
+                        key={med.id} 
+                        className={`p-4 rounded-2xl border transition-all flex items-center justify-between ${
+                          med.taken ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200 bg-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <button 
+                            onClick={() => toggleMedicineTaken(med.id)}
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
+                              med.taken ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' : 'border-2 border-slate-300 hover:border-emerald-500'
+                            }`}
+                          >
+                            {med.taken && <Check className="w-5 h-5" />}
+                          </button>
+                          <div>
+                            <h4 className={`text-sm font-bold ${med.taken ? 'line-through text-slate-400' : 'text-slate-800'}`}>
+                              {med.name}
+                            </h4>
+                            <p className="text-xs text-slate-500">{med.purpose} • <span className="font-semibold text-blue-600">{med.time}</span></p>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                            med.stock <= 5 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'
+                          }`}>
+                            {med.stock} doses left
+                          </span>
+                          {med.stock <= 5 && <p className="text-[10px] text-amber-600 font-semibold mt-1">Refill alert active</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Nearest Pharmacy Stock Finder */}
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                        <MapPin className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-800 text-sm">Nearby Pharmacy Locator</h4>
+                        <p className="text-[11px] text-slate-500">Live stock verification & price lookup</p>
+                      </div>
+                    </div>
+
+                    <input 
+                      type="text" 
+                      placeholder="Search medicine stock in local area..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                    />
+
+                    <div className="space-y-3">
+                      {pharmacies.map((pharm, idx) => (
+                        <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                          <div className="flex justify-between items-start font-bold text-slate-800">
+                            <span>{pharm.name}</span>
+                            <span className="text-emerald-600">{pharm.price}</span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 mt-0.5">{pharm.address}</p>
+                          <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-200/60">
+                            <span className="text-[10px] text-blue-600 font-semibold">{pharm.distance}</span>
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">{pharm.stock}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* DASHBOARD, SOS, AI-ASSISTANT, PMR LOGIC REMAINS INTEGRATED */}
           {activeTab === 'dashboard' && (
             <>
               <div className="bg-gradient-to-r from-red-600 via-rose-600 to-orange-600 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
@@ -262,7 +452,7 @@ export default function VitaLinkDashboard() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-slate-500">Next Dosage</p>
-                    <p className="text-xl font-bold text-slate-800">2:00 PM <span className="text-xs font-normal text-amber-600">(Paracetamol)</span></p>
+                    <p className="text-xl font-bold text-slate-800">2:00 PM <span className="text-xs font-normal text-amber-600">(Amoxicillin)</span></p>
                   </div>
                 </div>
 
@@ -321,7 +511,7 @@ export default function VitaLinkDashboard() {
             </>
           )}
 
-          {/* 4. EMERGENCY SOS MODULE */}
+          {/* SOS View */}
           {activeTab === 'sos' && (
             <div className="space-y-6">
               {!sosActive ? (
@@ -363,7 +553,6 @@ export default function VitaLinkDashboard() {
                     </button>
                   </div>
 
-                  {/* Flow Steps Pipeline */}
                   <div className="p-6 grid grid-cols-1 md:grid-cols-4 gap-4 border-b border-slate-100 bg-slate-50/50">
                     <div className={`p-4 rounded-xl border ${sosStep >= 1 ? 'border-emerald-300 bg-emerald-50/50' : 'border-slate-200'}`}>
                       <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs mb-1">
@@ -398,21 +587,19 @@ export default function VitaLinkDashboard() {
                     <div className="text-xs text-slate-500">
                       Emergency response pipeline synced automatically with regional healthcare database.
                     </div>
-                    <div className="flex gap-3">
-                      <button 
-                        onClick={() => setSosStep((prev) => Math.min(prev + 1, 4))}
-                        className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl"
-                      >
-                        Advance Pipeline Step ({sosStep}/4)
-                      </button>
-                    </div>
+                    <button 
+                      onClick={() => setSosStep((prev) => Math.min(prev + 1, 4))}
+                      className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl"
+                    >
+                      Advance Pipeline Step ({sosStep}/4)
+                    </button>
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* 2. AI SYMPTOM ASSISTANT MODULE */}
+          {/* AI Assistant View */}
           {activeTab === 'ai-assistant' && (
             <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[650px]">
               <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
@@ -430,7 +617,6 @@ export default function VitaLinkDashboard() {
                 </span>
               </div>
 
-              {/* Chat Message Stream */}
               <div className="flex-1 p-6 overflow-y-auto space-y-4">
                 {messages.map((msg, index) => (
                   <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -476,14 +662,13 @@ export default function VitaLinkDashboard() {
                 ))}
               </div>
 
-              {/* Chat Input */}
               <div className="p-4 border-t border-slate-200 bg-slate-50 flex gap-3">
                 <input
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Describe symptoms (e.g., severe migraine, high fever, chest pressure)..."
+                  placeholder="Describe symptoms..."
                   className="flex-1 bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button
@@ -496,12 +681,12 @@ export default function VitaLinkDashboard() {
             </div>
           )}
 
-          {/* Module Placeholder Views for Modules 1, 3, 5 */}
-          {(activeTab === 'telemedicine' || activeTab === 'medicine' || activeTab === 'pmr') && (
+          {/* 5. PMR Module Placeholder */}
+          {activeTab === 'pmr' && (
             <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm text-center py-16">
-              <h3 className="text-2xl font-bold text-slate-800 mb-2 capitalize">{activeTab.replace('-', ' ')} Module</h3>
+              <h3 className="text-2xl font-bold text-slate-800 mb-2">5. Personal Medical Record (PMR)</h3>
               <p className="text-slate-500 max-w-md mx-auto mb-6 text-sm">
-                Next phase will complete Telemedicine scheduling, Medicine Tracker stock queries, and encrypted Health History tables.
+                Ready for the final phase: continuous auto-syncing hospital records, lab diagnostics, vaccinations, and role-based sharing authorization.
               </p>
               <button 
                 onClick={() => setActiveTab('dashboard')} 
