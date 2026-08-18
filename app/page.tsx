@@ -286,56 +286,53 @@ export default function VitaLinkDashboard() {
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
     const userMsg = inputText.trim();
-    const newMessages = [...messages, { sender: 'user' as const, text: userMsg }];
-    setMessages(newMessages);
+    setMessages((prev) => [...prev, { sender: 'user', text: userMsg }]);
     setInputText('');
 
-    setTimeout(() => {
-      const lower = userMsg.toLowerCase();
-      if (lower.includes('chest') || lower.includes('breath') || lower.includes('unconscious') || lower.includes('छाती') || lower.includes('বুকে')) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: 'ai',
-            text: 'CRITICAL ALERT: Your symptoms indicate an acute cardiopulmonary risk. The Emergency SOS system is available below with 1-tap dispatch.',
-            triage: 'emergency'
-          }
-        ]);
-      } else if (lower.includes('fever') || lower.includes('cough') || lower.includes('headache') || lower.includes('बुखार') || lower.includes('জ্বর')) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: 'ai',
-            text: 'ASSESSMENT: Mild-to-moderate viral symptoms detected. Recommended First-Aid: Adequate hydration, rest, and regular temperature monitoring. Escalation to Telemedicine available.',
-            triage: 'moderate'
-          }
-        ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: 'ai',
-            text: 'General inquiry recorded in local health cache. You can request a doctor escalation at any time.',
-            triage: 'low'
-          }
-        ]);
-      }
-    }, networkMode === 'low' ? 1400 : 600);
-  };
+    try {
+      // Call Backend API Route
+      const res = await fetch('/api/triage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symptoms: userMsg, language }),
+      });
+      const data = await res.json();
 
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: 'ai',
+          text: data.recommendation,
+          triage: data.triage,
+        },
+      ]);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { sender: 'ai', text: 'Error connecting to backend triage server.', triage: 'low' },
+      ]);
+    }
+  };
   const toggleMedicineTaken = (id: number) => {
     setMedicines(medicines.map(m => m.id === id ? { ...m, taken: !m.taken } : m));
   };
 
-  const handleManualSync = () => {
+  const handleManualSync = async () => {
     setIsSyncing(true);
-    setTimeout(() => {
+    try {
+      // Call Backend HIS Sync API
+      const res = await fetch('/api/records');
+      const data = await res.json();
+      if (data.success) {
+        setIsSyncing(false);
+      }
+    } catch (err) {
       setIsSyncing(false);
-    }, networkMode === 'low' ? 2200 : 1000);
+    }
   };
 
   const handleShareRecord = () => {
