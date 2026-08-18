@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Heart, 
   Video, 
@@ -37,10 +37,13 @@ import {
   Mic, 
   MicOff,
   Database,
-  Radio
+  Radio,
+  Users,
+  Stethoscope,
+  ClipboardList,
+  Flame
 } from 'lucide-react';
 
-// Multilingual Translations Dictionary
 const translations: Record<string, Record<string, string>> = {
   en: {
     title: 'VITALINK',
@@ -58,7 +61,7 @@ const translations: Record<string, Record<string, string>> = {
     sosTriggerNow: 'Trigger SOS Now',
     sosPrompt: 'One-Tap Emergency SOS',
     sosSubtext: 'Triggering instantly transmits your continuous medical history, current vitals, and live GPS coordinates to nearest dispatch units.',
-    offlineNotice: 'Offline Mode Active: Data is read/written to local secure IndexedDB cache.',
+    offlineNotice: 'Offline Mode Active: Data is cached in local secure storage.',
     listening: 'Listening to your voice...',
     speakSymptom: 'Click microphone or type symptoms...',
     bp: 'Blood Pressure',
@@ -88,7 +91,7 @@ const translations: Record<string, Record<string, string>> = {
     sosTriggerNow: 'तत्काल एसओएस दबाएं',
     sosPrompt: 'वन-टैप आपातकालीन एसओएस',
     sosSubtext: 'यह बटन तुरंत आपका संपूर्ण मेडिकल इतिहास, एलर्जी और लाइव जीपीएस निकटतम अस्पताल को भेजता है।',
-    offlineNotice: 'ऑफ़लाइन मोड सक्रिय: डेटा स्थानीय रूप से सुरक्षित रूप से संग्रहीत है।',
+    offlineNotice: 'ऑफ़लाइन मोड सक्रिय: डेटा स्थानीय रूप से संग्रहीत है।',
     listening: 'आपकी आवाज़ सुनी जा रही है...',
     speakSymptom: 'माइक दबाएं या लक्षण लिखें...',
     bp: 'रक्तचाप',
@@ -118,7 +121,7 @@ const translations: Record<string, Record<string, string>> = {
     sosTriggerNow: 'জরুরি এসওএস ট্রিগার করুন',
     sosPrompt: 'এক-ট্যাপ জরুরি এসওএস',
     sosSubtext: 'এটি এক ক্লিকেই আপনার অতীতের মেডিকেল ইতিহাস ও লাইভ জিপিএস অ্যাম্বুলেন্সে পাঠিয়ে দেবে।',
-    offlineNotice: 'অফলাইন মোড সক্রিয়: ডেটা স্থানীয়ভাবে নিরাপদে সংরক্ষিত হচ্ছে।',
+    offlineNotice: 'অফলাইন মোড সক্রিয়: ডেটা স্থানীয়ভাবে সংরক্ষিত হচ্ছে।',
     listening: 'আপনার কথা শোনা হচ্ছে...',
     speakSymptom: 'কথা বলুন অথবা উপসর্গ লিখুন...',
     bp: 'রক্তচাপ',
@@ -148,7 +151,7 @@ const translations: Record<string, Record<string, string>> = {
     sosTriggerNow: 'Activar SOS Ahora',
     sosPrompt: 'SOS de Emergencia en 1 Toque',
     sosSubtext: 'Transmite al instante el historial médico unificado y coordenadas GPS a emergencias.',
-    offlineNotice: 'Modo sin conexión: Datos guardados en almacenamiento local seguro.',
+    offlineNotice: 'Modo sin conexión: Datos guardados localmente.',
     listening: 'Escuchando su voz...',
     speakSymptom: 'Presione el micrófono o escriba...',
     bp: 'Presión Arterial',
@@ -168,7 +171,7 @@ export default function VitaLinkDashboard() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'telemedicine' | 'ai-assistant' | 'medicine' | 'sos' | 'pmr'>('dashboard');
   const [userRole, setUserRole] = useState<'Patient' | 'Healthcare Worker' | 'Doctor' | 'Paramedic' | 'Admin'>('Patient');
   
-  // Multilingual & Connectivity State
+  // Multilingual & Bandwidth State
   const [language, setLanguage] = useState<'en' | 'hi' | 'bn' | 'es'>('en');
   const [networkMode, setNetworkMode] = useState<'online' | 'low' | 'offline'>('online');
   const [isListening, setIsListening] = useState(false);
@@ -192,7 +195,7 @@ export default function VitaLinkDashboard() {
     currentGPS: 'Lat: 23.2324° N, Long: 87.0715° E (Bankura District)'
   };
 
-  // AI Assistant State
+  // AI Assistant Chat State
   const [messages, setMessages] = useState<Array<{ sender: 'ai' | 'user'; text: string; triage?: 'low' | 'moderate' | 'emergency' }>>([
     {
       sender: 'ai',
@@ -249,7 +252,7 @@ export default function VitaLinkDashboard() {
     { name: 'CarePlus 24/7 Meds', distance: '4.1 km away', stock: 'In Stock', price: '$4.90', address: 'Near District Hospital Gate' },
   ];
 
-  // Speech Recognition Handler
+  // Speech Recognition
   const toggleSpeechRecognition = () => {
     if (isListening) {
       setIsListening(false);
@@ -418,11 +421,11 @@ export default function VitaLinkDashboard() {
           </nav>
         </div>
 
-        {/* Controls: Language, Network, Role */}
+        {/* Controls */}
         <div className="p-4 bg-slate-950/70 border-t border-slate-800 space-y-3">
           <div>
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1 flex items-center gap-1">
-              <Globe className="w-3 h-3 text-blue-400" /> Language / ভাষা
+              <Globe className="w-3 h-3 text-blue-400" /> Language / भाषा
             </label>
             <select
               value={language}
@@ -472,7 +475,6 @@ export default function VitaLinkDashboard() {
 
       {/* Main Content Viewport */}
       <main className="flex-1 flex flex-col overflow-y-auto">
-        {/* Offline Banner indicator */}
         {networkMode !== 'online' && (
           <div className={`px-6 py-2 text-xs font-semibold flex items-center justify-between ${
             networkMode === 'offline' ? 'bg-amber-500 text-slate-900' : 'bg-teal-600 text-white'
@@ -517,6 +519,33 @@ export default function VitaLinkDashboard() {
         </header>
 
         <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
+          {/* ROLE CUSTOM OVERLAYS (DOCTOR / PARAMEDIC / ADMIN) */}
+          {userRole === 'Doctor' && activeTab === 'dashboard' && (
+            <div className="bg-blue-900 text-white p-6 rounded-3xl shadow-md border border-blue-800 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-800 px-2.5 py-1 rounded-full text-blue-200">Doctor Portal View</span>
+                <h3 className="text-xl font-bold mt-2">Dr. Sarah Jenkins - Outpatient Queue</h3>
+                <p className="text-xs text-blue-200 mt-1">3 scheduled telemedicine calls • 1 escalated emergency triage request</p>
+              </div>
+              <button onClick={() => setActiveTab('telemedicine')} className="px-4 py-2 bg-white text-blue-900 font-bold text-xs rounded-xl shadow">
+                Open Telemedicine Queue
+              </button>
+            </div>
+          )}
+
+          {userRole === 'Paramedic' && activeTab === 'dashboard' && (
+            <div className="bg-red-950 text-white p-6 rounded-3xl shadow-md border border-red-800 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-red-800 px-2.5 py-1 rounded-full text-red-200">Paramedic Dispatch Console</span>
+                <h3 className="text-xl font-bold mt-2">Emergency Response Unit #04</h3>
+                <p className="text-xs text-red-200 mt-1">{sosActive ? 'Active SOS Signal Received: Bankura Sector 3' : 'Standing by for live context-aware SOS alerts'}</p>
+              </div>
+              <button onClick={() => setActiveTab('sos')} className="px-4 py-2 bg-red-600 text-white font-bold text-xs rounded-xl shadow">
+                Open Dispatch Monitor
+              </button>
+            </div>
+          )}
+
           {/* DASHBOARD TAB */}
           {activeTab === 'dashboard' && (
             <>
@@ -629,7 +658,7 @@ export default function VitaLinkDashboard() {
             </>
           )}
 
-          {/* 4. INNOVATIVE EMERGENCY SOS (CONTEXT-AWARE PIPELINE) */}
+          {/* 4. EMERGENCY SOS */}
           {activeTab === 'sos' && (
             <div className="space-y-6">
               {!sosActive ? (
@@ -671,7 +700,6 @@ export default function VitaLinkDashboard() {
                     </button>
                   </div>
 
-                  {/* Context-Aware Medical Snapshot Header */}
                   <div className="p-6 bg-slate-900 text-white border-b border-slate-800">
                     <div className="flex items-center gap-2 mb-3">
                       <ShieldAlert className="w-4 h-4 text-amber-400" />
@@ -697,7 +725,6 @@ export default function VitaLinkDashboard() {
                     </div>
                   </div>
 
-                  {/* 4-Step Pipeline Flow */}
                   <div className="p-6 grid grid-cols-1 md:grid-cols-4 gap-4 border-b border-slate-100 bg-slate-50/50">
                     <div className={`p-4 rounded-xl border ${sosStep >= 1 ? 'border-emerald-300 bg-emerald-50/50' : 'border-slate-200'}`}>
                       <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs mb-1">
@@ -744,7 +771,7 @@ export default function VitaLinkDashboard() {
             </div>
           )}
 
-          {/* 2. AI SYMPTOM ASSISTANT (MULTILINGUAL + VOICE) */}
+          {/* 2. AI SYMPTOM ASSISTANT */}
           {activeTab === 'ai-assistant' && (
             <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[650px]">
               <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
@@ -762,7 +789,6 @@ export default function VitaLinkDashboard() {
                 </span>
               </div>
 
-              {/* Chat Stream */}
               <div className="flex-1 p-6 overflow-y-auto space-y-4">
                 {messages.map((msg, index) => (
                   <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -808,7 +834,6 @@ export default function VitaLinkDashboard() {
                 ))}
               </div>
 
-              {/* Chat Input with Speech to Text */}
               <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center gap-3">
                 <button
                   onClick={toggleSpeechRecognition}
@@ -851,7 +876,7 @@ export default function VitaLinkDashboard() {
                       <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
                       <div>
                         <h4 className="font-bold text-base">Live Consultation: {selectedDoctor}</h4>
-                        <p className="text-xs text-slate-400">Low-latency rural stream ({networkMode} mode)</p>
+                        <p className="text-xs text-slate-400">Low-latency stream ({networkMode} mode)</p>
                       </div>
                     </div>
                     <button 
@@ -1036,7 +1061,6 @@ export default function VitaLinkDashboard() {
                 </div>
               </div>
 
-              {/* Medical History Timeline */}
               <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="p-6 border-b border-slate-100 flex justify-between items-center">
                   <h4 className="font-bold text-sm text-slate-800">Verified Medical History Timeline</h4>
