@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Heart, 
   Video, 
@@ -10,27 +10,13 @@ import {
   FileText, 
   Activity, 
   ShieldCheck, 
-  MapPin, 
-  PhoneCall, 
   Search, 
   Bell, 
   Send, 
-  Ambulance, 
-  CheckCircle2, 
-  Clock, 
-  AlertCircle, 
-  Sparkles, 
-  User, 
-  ShieldAlert, 
-  Calendar, 
-  MessageSquare, 
-  Navigation, 
   Check, 
   Plus, 
-  Lock, 
   Share2, 
   RefreshCw, 
-  Download, 
   Globe, 
   Wifi, 
   WifiOff, 
@@ -38,18 +24,14 @@ import {
   MicOff,
   LayoutGrid,
   Users,
-  CalendarDays,
   MoreVertical,
   ChevronLeft,
   ChevronRight,
-  TrendingUp,
-  Settings,
   Radio,
-  ExternalLink,
-  Shield,
-  PhoneForwarded,
-  Stethoscope,
-  Hospital
+  Dna,
+  Zap,
+  Sparkles,
+  MessageSquare
 } from 'lucide-react';
 
 const translations: Record<string, Record<string, string>> = {
@@ -175,24 +157,148 @@ const translations: Record<string, Record<string, string>> = {
   }
 };
 
+// --- INLINE ROTATIONAL DNA 3D COMPONENT ---
+function DnaHelixVisualizer() {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [rotationSpeed, setRotationSpeed] = useState(0.025);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let angle = 0;
+
+    const basePairs = Array.from({ length: 16 }, (_, i) => ({
+      offset: (i * Math.PI) / 7,
+      colorA: i % 2 === 0 ? '#2bfb8d' : '#22d3ee',
+      colorB: i % 2 === 0 ? '#10b981' : '#38bdf8',
+    }));
+
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = 45;
+      const heightStep = 12;
+      const totalHeight = basePairs.length * heightStep;
+      const startY = centerY - totalHeight / 2;
+
+      basePairs.forEach((pair, index) => {
+        const currentY = startY + index * heightStep;
+        const currentAngle = angle + pair.offset;
+
+        const x1 = centerX + Math.cos(currentAngle) * radius;
+        const x2 = centerX - Math.cos(currentAngle) * radius;
+        const depth = Math.sin(currentAngle);
+        const scale = 0.75 + ((depth + 1) / 2) * 0.45;
+
+        // Connecting Hydrogen Bond
+        ctx.beginPath();
+        ctx.moveTo(x1, currentY);
+        ctx.lineTo(x2, currentY);
+        ctx.strokeStyle = `rgba(43, 251, 141, ${0.15 + ((depth + 1) / 2) * 0.4})`;
+        ctx.lineWidth = 1.5 * scale;
+        ctx.stroke();
+
+        // Node A
+        ctx.beginPath();
+        ctx.arc(x1, currentY, 3.5 * scale, 0, Math.PI * 2);
+        ctx.fillStyle = pair.colorA;
+        ctx.shadowColor = '#2bfb8d';
+        ctx.shadowBlur = depth > 0 ? 6 : 1;
+        ctx.fill();
+
+        // Node B
+        ctx.beginPath();
+        ctx.arc(x2, currentY, 3.5 * scale, 0, Math.PI * 2);
+        ctx.fillStyle = pair.colorB;
+        ctx.shadowColor = '#22d3ee';
+        ctx.shadowBlur = depth < 0 ? 6 : 1;
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+      });
+
+      angle += rotationSpeed;
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [rotationSpeed]);
+
+  return (
+    <div 
+      onMouseEnter={() => setRotationSpeed(0.055)}
+      onMouseLeave={() => setRotationSpeed(0.025)}
+      className="bg-[#161a18] border border-[#232a26] hover:border-[#2bfb8d]/40 rounded-3xl p-4 flex flex-col justify-between transition-all relative overflow-hidden group shadow-lg"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-xl bg-[#1d2420] text-[#2bfb8d] flex items-center justify-center border border-[#2bfb8d]/20">
+            <Dna className="w-3.5 h-3.5 animate-pulse" />
+          </div>
+          <div>
+            <h4 className="text-[11px] font-bold text-white tracking-tight">Genomic Helix</h4>
+            <p className="text-[9px] text-[#5a6560]">Interactive Telemetry</p>
+          </div>
+        </div>
+        <span className="text-[9px] bg-[#1d2420] text-[#2bfb8d] border border-[#2bfb8d]/20 px-2 py-0.5 rounded-full font-black uppercase tracking-wider flex items-center gap-1">
+          <Zap className="w-2.5 h-2.5" /> 3D Live
+        </span>
+      </div>
+
+      <div className="relative my-2 flex items-center justify-center cursor-grab active:cursor-grabbing">
+        <canvas ref={canvasRef} width={200} height={200} className="w-full max-w-[200px] h-[200px]" />
+        <div className="absolute inset-0 bg-radial from-[#2bfb8d]/10 via-transparent to-transparent pointer-events-none" />
+      </div>
+
+      <div className="space-y-2">
+        <div className="bg-[#111413] p-2.5 rounded-xl border border-[#202723] flex items-center justify-between text-xs">
+          <div>
+            <p className="text-[9px] text-[#5a6560] font-semibold">Biodata Profile</p>
+            <p className="text-[11px] font-bold text-white tracking-wider">HLA-B*5701 / Normal</p>
+          </div>
+          <span className="text-[9px] text-[#2bfb8d] font-bold bg-[#1d2420] px-2 py-0.5 rounded-md">
+            99.8% Match
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between text-[9px] text-[#8b9590] px-1">
+          <span className="flex items-center gap-1">
+            <Sparkles className="w-2.5 h-2.5 text-[#2bfb8d]" /> Hover to accelerate
+          </span>
+          <button 
+            onClick={() => setRotationSpeed((prev) => (prev > 0.03 ? 0.02 : 0.07))}
+            className="hover:text-white flex items-center gap-1 cursor-pointer"
+          >
+            <RefreshCw className="w-2.5 h-2.5" /> Spin
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- MAIN APPLICATION ---
 export default function VitaLinkMain() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'telemedicine' | 'ai-assistant' | 'medicine' | 'sos' | 'pmr'>('dashboard');
-  
-  // Default user role restored to Patient / Family
   const [userRole, setUserRole] = useState<'Patient / Family' | 'Healthcare Worker' | 'Doctor / Specialist' | 'Paramedics / Emergency' | 'Admin'>('Patient / Family');
-  
-  // Multilingual & Bandwidth State
   const [language, setLanguage] = useState<'en' | 'hi' | 'bn' | 'es'>('en');
   const [networkMode, setNetworkMode] = useState<'online' | 'low' | 'offline'>('online');
   const [isListening, setIsListening] = useState(false);
 
   const t = translations[language];
 
-  // Emergency SOS State
   const [sosActive, setSosActive] = useState(false);
   const [sosStep, setSosStep] = useState<number>(1);
 
-  // Patient Emergency Context Snapshot
   const patientEmergencyProfile = {
     patientName: 'Arpan Mukherjee (ID #VL-8924)',
     age: 34,
@@ -205,7 +311,6 @@ export default function VitaLinkMain() {
     currentGPS: 'Lat: 23.2324° N, Long: 87.0715° E (Bankura District)'
   };
 
-  // AI Assistant Chat State
   const [messages, setMessages] = useState<Array<{ sender: 'ai' | 'user'; text: string; triage?: 'low' | 'moderate' | 'emergency' }>>([
     {
       sender: 'ai',
@@ -214,18 +319,15 @@ export default function VitaLinkMain() {
   ]);
   const [inputText, setInputText] = useState('');
 
-  // Telemedicine State
   const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
   const [inCall, setInCall] = useState(false);
 
-  // Medicine Tracker State
   const [medicines, setMedicines] = useState([
     { id: 1, name: 'Paracetamol 500mg', time: '08:00 AM & 08:00 PM', purpose: 'Fever / Pain Relief', stock: 12, taken: true },
     { id: 2, name: 'Amoxicillin 250mg', time: '02:00 PM', purpose: 'Antibiotic Course', stock: 4, taken: false },
     { id: 3, name: 'Metformin 500mg', time: '09:00 PM', purpose: 'Blood Sugar Regulation', stock: 24, taken: false },
   ]);
 
-  // PMR State
   const [isSyncing, setIsSyncing] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
 
@@ -262,7 +364,6 @@ export default function VitaLinkMain() {
     { name: 'CarePlus 24/7 Meds', distance: '4.1 km away', stock: 'In Stock', price: '$4.90', address: 'Near District Hospital Gate' },
   ];
 
-  // Speech Recognition
   const toggleSpeechRecognition = () => {
     if (isListening) {
       setIsListening(false);
@@ -296,7 +397,6 @@ export default function VitaLinkMain() {
     }
   };
 
-  // Backend Triage
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
@@ -372,7 +472,6 @@ export default function VitaLinkMain() {
             </div>
           </div>
 
-          {/* Core Modules 1 to 5 Navigation */}
           <nav className="space-y-1.5 pt-1">
             <button
               onClick={() => setActiveTab('dashboard')}
@@ -456,9 +555,7 @@ export default function VitaLinkMain() {
           </nav>
         </div>
 
-        {/* Bottom Switchers: Language, Bandwidth, and Exact Role Dropdown from Screenshot */}
         <div className="space-y-3 pt-3 border-t border-[#1e2321]">
-          {/* Language Selector */}
           <div>
             <label className="text-[10px] font-bold text-[#8b9590] uppercase tracking-wider block mb-1 flex items-center gap-1">
               <Globe className="w-3 h-3 text-[#2bfb8d]" /> LANGUAGE / भाषा
@@ -475,7 +572,6 @@ export default function VitaLinkMain() {
             </select>
           </div>
 
-          {/* Bandwidth Mode */}
           <div>
             <label className="text-[10px] font-bold text-[#8b9590] uppercase tracking-wider block mb-1 flex items-center gap-1">
               <Radio className="w-3 h-3 text-[#2bfb8d]" /> NETWORK / बैंडविड्थ
@@ -491,7 +587,6 @@ export default function VitaLinkMain() {
             </select>
           </div>
 
-          {/* Exact Role Dropdown Selector */}
           <div>
             <label className="text-[10px] font-bold text-[#8b9590] uppercase tracking-wider block mb-1 flex items-center gap-1">
               <Users className="w-3 h-3 text-[#2bfb8d]" /> {t.simulateRole}
@@ -513,7 +608,6 @@ export default function VitaLinkMain() {
 
       {/* 2. MAIN WORKSPACE */}
       <main className="flex-1 flex flex-col overflow-y-auto bg-[#0d0f0e]">
-        {/* Network Mode Status Banner */}
         {networkMode !== 'online' && (
           <div className={`px-6 py-2 text-xs font-semibold flex items-center justify-between ${
             networkMode === 'offline' ? 'bg-amber-500 text-slate-900' : 'bg-teal-600 text-white'
@@ -528,7 +622,6 @@ export default function VitaLinkMain() {
           </div>
         )}
 
-        {/* Top Header */}
         <header className="px-8 py-5 flex items-center justify-between sticky top-0 bg-[#0d0f0e]/85 backdrop-blur-md z-10 border-b border-[#161a18]">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-bold text-white capitalize">
@@ -554,7 +647,6 @@ export default function VitaLinkMain() {
               {sosActive && <span className="w-2 h-2 rounded-full bg-red-500 absolute top-2 right-2 animate-ping"></span>}
             </button>
 
-            {/* Profile Pill */}
             <div className="flex items-center gap-2.5 pl-3 py-1 pr-1.5 bg-[#161a18] border border-[#232a26] rounded-2xl">
               <div className="text-right">
                 <p className="text-xs font-bold text-white leading-tight">
@@ -569,12 +661,9 @@ export default function VitaLinkMain() {
           </div>
         </header>
 
-        {/* Center Content Body */}
-        <div className="p-8 space-y-6 max-w-6xl">
-          {/* DASHBOARD TAB (Patient & Universal Overview) */}
+        <div className="p-8 space-y-6 max-w-5xl">
           {activeTab === 'dashboard' && (
             <>
-              {/* Emergency SOS Banner */}
               <div className="bg-gradient-to-r from-red-600 via-rose-600 to-orange-600 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 font-bold text-red-100 text-xs tracking-wider uppercase mb-1">
@@ -596,7 +685,6 @@ export default function VitaLinkMain() {
                 </button>
               </div>
 
-              {/* Patient Vitals & Health Telemetry Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-[#161a18] p-5 rounded-3xl border border-[#232a26] flex items-center gap-4">
                   <div className="w-11 h-11 rounded-2xl bg-[#1d2420] text-[#2bfb8d] flex items-center justify-center">
@@ -639,7 +727,6 @@ export default function VitaLinkMain() {
                 </div>
               </div>
 
-              {/* 5 Core Feature Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div onClick={() => setActiveTab('telemedicine')} className="bg-[#161a18] p-6 rounded-3xl border border-[#232a26] hover:border-[#2bfb8d] hover:shadow-lg transition-all cursor-pointer group">
                   <div className="w-12 h-12 rounded-2xl bg-[#1d2420] text-[#2bfb8d] flex items-center justify-center mb-4 group-hover:bg-[#2bfb8d] group-hover:text-[#0d0f0e] transition-all">
@@ -684,7 +771,6 @@ export default function VitaLinkMain() {
             </>
           )}
 
-          {/* 1. TELEMEDICINE TAB */}
           {activeTab === 'telemedicine' && (
             <div className="space-y-6">
               {inCall ? (
@@ -713,9 +799,9 @@ export default function VitaLinkMain() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   {[
-                    { name: 'Dr. Sarah Jenkins', spec: 'General Physician / Internal Medicine', rating: '4.9 (124 reviews)', available: 'Available Now', wait: '2 mins' },
-                    { name: 'Dr. Rajesh Mukherjee', spec: 'Cardiologist & Triage Specialist', rating: '4.8 (89 reviews)', available: 'Available Now', wait: '5 mins' },
-                    { name: 'Dr. Emily Chen', spec: 'Pediatric Care Specialist', rating: '5.0 (210 reviews)', available: 'Next Slot: 3:30 PM', wait: 'Scheduled' },
+                    { name: 'Dr. Sarah Jenkins', spec: 'General Physician / Internal Medicine', rating: '4.9 (124 reviews)', available: 'Available Now' },
+                    { name: 'Dr. Rajesh Mukherjee', spec: 'Cardiologist & Triage Specialist', rating: '4.8 (89 reviews)', available: 'Available Now' },
+                    { name: 'Dr. Emily Chen', spec: 'Pediatric Care Specialist', rating: '5.0 (210 reviews)', available: 'Next Slot: 3:30 PM' },
                   ].map((doc, idx) => (
                     <div key={idx} className="bg-[#161a18] p-6 rounded-3xl border border-[#232a26] flex flex-col justify-between">
                       <div>
@@ -753,7 +839,6 @@ export default function VitaLinkMain() {
             </div>
           )}
 
-          {/* 2. AI SYMPTOM ASSISTANT */}
           {activeTab === 'ai-assistant' && (
             <div className="bg-[#161a18] rounded-3xl border border-[#232a26] flex flex-col h-[600px] overflow-hidden">
               <div className="p-4 bg-[#111413] border-b border-[#202723] flex items-center justify-between">
@@ -800,7 +885,6 @@ export default function VitaLinkMain() {
                   className={`p-3 rounded-2xl border transition-all ${
                     isListening ? 'bg-red-500 text-white border-red-500 animate-pulse' : 'bg-[#161a18] text-[#8b9590] border-[#232a26]'
                   }`}
-                  title="Speak in selected language"
                 >
                   {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                 </button>
@@ -822,7 +906,6 @@ export default function VitaLinkMain() {
             </div>
           )}
 
-          {/* 3. MEDICINE TRACKER */}
           {activeTab === 'medicine' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -862,7 +945,6 @@ export default function VitaLinkMain() {
                   </div>
                 </div>
 
-                {/* Nearby Pharmacies */}
                 <div className="bg-[#161a18] p-6 rounded-3xl border border-[#232a26] flex flex-col justify-between">
                   <div>
                     <h4 className="font-bold text-white text-sm mb-1">Nearby Pharmacy Locator</h4>
@@ -889,7 +971,6 @@ export default function VitaLinkMain() {
             </div>
           )}
 
-          {/* 4. EMERGENCY SOS */}
           {activeTab === 'sos' && (
             <div className="space-y-6">
               {!sosActive ? (
@@ -976,7 +1057,6 @@ export default function VitaLinkMain() {
             </div>
           )}
 
-          {/* 5. PMR MEDICAL RECORDS */}
           {activeTab === 'pmr' && (
             <div className="space-y-4">
               <div className="bg-[#161a18] p-6 rounded-3xl border border-[#232a26] flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
@@ -1013,6 +1093,62 @@ export default function VitaLinkMain() {
           )}
         </div>
       </main>
+
+      {/* 3. RIGHT PANEL WITH INTERACTIVE ROTATIONAL DNA HELIX */}
+      <aside className="w-80 bg-[#111413] border-l border-[#1e2321] p-5 hidden lg:flex flex-col gap-5 overflow-y-auto">
+        <DnaHelixVisualizer />
+
+        <div className="bg-[#161a18] p-4 rounded-3xl border border-[#232a26]">
+          <div className="flex items-center justify-between mb-3 text-xs">
+            <button className="p-1 rounded-lg hover:bg-[#111413] text-[#8b9590]"><ChevronLeft className="w-4 h-4" /></button>
+            <div className="text-center">
+              <p className="text-[9px] text-[#5a6560] font-semibold uppercase">Schedule</p>
+              <p className="font-bold text-white text-xs">August 22, Monday</p>
+            </div>
+            <button className="p-1 rounded-lg hover:bg-[#111413] text-[#8b9590]"><ChevronRight className="w-4 h-4" /></button>
+          </div>
+
+          <div className="grid grid-cols-6 gap-1 text-center text-[10px]">
+            {['Sun 21', 'Mon 22', 'Tue 23', 'Wed 24', 'Thu 25', 'Fri 26'].map((d, i) => (
+              <div key={i} className={`py-1 rounded-xl ${i === 1 ? 'bg-[#2bfb8d] text-[#0d0f0e] font-black' : 'text-[#8b9590]'}`}>
+                <p className="text-[8px]">{d.split(' ')[0]}</p>
+                <p className="font-bold">{d.split(' ')[1]}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-bold text-white text-xs">Today's Visits</h4>
+            <span className="text-[9px] text-[#8b9590] bg-[#161a18] px-2 py-0.5 rounded-md">
+              10.00 am - 18.00 pm
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {[
+              { name: 'Emily Carter', time: '10.00 AM - 11.00 AM', avatar: 'EC' },
+              { name: 'James Bennett', time: '11.00 AM - 12.00 AM', avatar: 'JB' },
+              { name: 'Olivia Turner', time: '12.00 AM - 01.00 PM', avatar: 'OT' },
+              { name: 'Liam Mitchell', time: '01.00 PM - 02.00 PM', avatar: 'LM' },
+            ].map((patient, i) => (
+              <div key={i} className="flex items-center justify-between p-2 rounded-2xl bg-[#161a18]/60 hover:bg-[#161a18] border border-transparent hover:border-[#232a26] transition-all">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-[#1d2420] text-[#2bfb8d] text-[9px] font-bold flex items-center justify-center">
+                    {patient.avatar}
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-white leading-tight">{patient.name}</p>
+                    <p className="text-[9px] text-[#5a6560]">{patient.time}</p>
+                  </div>
+                </div>
+                <MoreVertical className="w-3 h-3 text-[#5a6560]" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }
