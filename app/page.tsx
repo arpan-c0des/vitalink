@@ -455,7 +455,7 @@ export default function VitaLinkMain() {
   };
 
   return (
-    <div className="flex h-screen bg-[#0d0f0e] text-[#f1f5f4] font-sans antialiased overflow-hidden select-none">
+    <div className="vitalink-shell flex h-screen bg-[#0d0f0e] text-[#f1f5f4] font-sans antialiased overflow-hidden select-none">
       
       {/* 1. LEFT SIDEBAR NAVIGATION */}
       <aside className="w-64 bg-[#111413] border-r border-[#1e2321] flex flex-col justify-between p-5 hidden md:flex">
